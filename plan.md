@@ -114,6 +114,6 @@
       * 在 Cloudflare Pages 中连接该仓库。
       * **构建设置：** 框架预设选择 `Vite`，Cloudflare 将自动处理构建。
 2.  **分享与测试：**
-      * 获取部署后的 `*.pages.dev` 公开 URL。
+      * 获取部署后的 `https://crashdash.zhanghe.dev` 公开 URL。
       * 构造 Warpcast 分享链接 `https://warpcast.com/~/compose?text=...&embeds[]=[Your_App_URL]`。
       * 发布到 Farcaster 进行最终测试。
