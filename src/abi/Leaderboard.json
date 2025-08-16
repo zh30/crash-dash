@@ -20,6 +20,25 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getLowest20",
+    "outputs": [
+      { "internalType": "address[]", "name": "players", "type": "address[]" },
+      { "internalType": "uint256[]", "name": "scores", "type": "uint256[]" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_TOP",
+    "outputs": [
+      { "internalType": "uint256", "name": "", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       { "internalType": "uint256", "name": "newScore", "type": "uint256" }
     ],

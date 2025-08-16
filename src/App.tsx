@@ -50,7 +50,7 @@ function App() {
           />
         )}
 
-        {activeView === "leaderboard" && <Leaderboard refreshToken={leaderboardRefreshToken} />}
+        {activeView === "leaderboard" && <Leaderboard key={leaderboardRefreshToken} />}
       </div>
     </div>
   );
@@ -336,7 +336,8 @@ function CandleChart({ candles, height, sellPrice }: { candles: Candle[]; height
 
 function SubmitScoreButton({ score, onSubmitted }: { score: number; onSubmitted?: () => void }) {
   const { isConnected } = useAccount();
-  const { writeContract, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useWriteContract();
+  const publicClient = usePublicClient();
 
   // NOTE: 等你部署后把地址填进来
   const contractAddress = useMemo<`0x${string}`>(() => {
@@ -346,12 +347,15 @@ function SubmitScoreButton({ score, onSubmitted }: { score: number; onSubmitted?
 
   const onSubmit = async () => {
     if (!isConnected) return;
-    await writeContract({
+    const txHash = await writeContractAsync({
       abi: leaderboardAbi as unknown as readonly unknown[],
       address: contractAddress,
       functionName: "submitScore",
       args: [BigInt(Math.round(score * SCORE_SCALE))],
     });
+    if (publicClient) {
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
+    }
     onSubmitted?.();
   };
 
@@ -373,12 +377,7 @@ export default App;
 
 // ---------------- Leaderboard ----------------
 
-type ScoreSubmittedEvent = {
-  args: { player: `0x${string}`; score: bigint };
-  transactionHash: `0x${string}`;
-};
-
-function Leaderboard(_: { refreshToken?: number }) {
+function Leaderboard() {
   const publicClient = usePublicClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -395,29 +394,15 @@ function Leaderboard(_: { refreshToken?: number }) {
     setLoading(true);
     setError(null);
     try {
-      const events = (await publicClient.getContractEvents({
+      const [players, scores] = (await publicClient.readContract({
         abi: leaderboardAbi as unknown as readonly unknown[],
         address: contractAddress,
-        eventName: "ScoreSubmitted",
-        fromBlock: 0n,
-      })) as unknown as ScoreSubmittedEvent[];
+        functionName: "getLowest20",
+        args: [],
+      })) as unknown as [readonly `0x${string}`[], readonly bigint[]];
 
-      const bestByPlayer = new Map<string, bigint>();
-      for (const ev of events) {
-        const player = ev.args.player.toLowerCase();
-        const score = ev.args.score;
-        const current = bestByPlayer.get(player);
-        if (current === undefined || score < current) {
-          bestByPlayer.set(player, score);
-        }
-      }
-
-      const list = Array.from(bestByPlayer.entries()).map(([player, bestScore]) => ({
-        player: player as `0x${string}`,
-        bestScore,
-      }));
-      list.sort((a, b) => (a.bestScore < b.bestScore ? -1 : a.bestScore > b.bestScore ? 1 : 0));
-      setRows(list.slice(0, 20));
+      const list = players.map((p, i) => ({ player: p, bestScore: scores[i] }));
+      setRows(list);
     } catch (e) {
       setError((e as Error).message);
     } finally {
