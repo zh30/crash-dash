@@ -2,12 +2,12 @@
   "frame": {
     "name": "Crash Dash",
     "version": "1",
-    "iconUrl": "https://crashdash.zhanghe.dev/logo.jpg",
-    "homeUrl": "https://crashdash.zhanghe.dev",
-    "imageUrl": "https://crashdash.zhanghe.dev/image.png",
-    "splashImageUrl": "https://crashdash.zhanghe.dev/splash.png",
+    "iconUrl": "crashdash.zhanghe.dev/logo.jpg",
+    "homeUrl": "crashdash.zhanghe.dev",
+    "imageUrl": "crashdash.zhanghe.dev/image.png",
+    "splashImageUrl": "crashdash.zhanghe.dev/splash.png",
     "splashBackgroundColor": "#101827",
-    "webhookUrl": "https://crashdash.zhanghe.dev/api/webhook",
+    "webhookUrl": "crashdash.zhanghe.dev/api/webhook",
     "subtitle": "Crash Dash",
     "description": "Crash Dash",
     "primaryCategory": "games"
