@@ -15,15 +15,9 @@
 
 1.  **创建 Vite + React 项目：**
     ```bash
-    npm create vite@latest monad-speedrun -- --template react
+    pnpm create @farcaster/mini-app
     ```
-2.  **进入项目并安装核心依赖：**
-    ```bash
-    cd monad-speedrun
-    npm install
-    npm install wagmi viem @tanstack/react-query react-helmet-async
-    ```
-3.  **智能合约环境：**
+2.  **智能合约环境：**
       * 在项目根目录创建 `contracts` 文件夹。
       * 确保 [Foundry](https://book.getfoundry.sh/getting-started/installation) 已安装好。
 
@@ -33,7 +27,7 @@
 
 **核心思路：** 合约本身**不存储**排行榜列表，只负责记录个人最好成绩和广播事件。这能让用户的交易手续费 (Gas Fee) 降到最低。对于 "Crash Dash" 玩法，**分数 = 峰值价格 - 卖出时价格**。分数越接近 0 代表操作越完美，完全契合现有合约逻辑。
 
-1.  **合约设计 (`contracts/Leaderboard.sol`)：** (无需任何修改，完全复用)
+1.  **合约设计 (`contracts/Leaderboard.sol`)：** 
     ```solidity
     // SPDX-License-Identifier: MIT
     pragma solidity ^0.8.20;
