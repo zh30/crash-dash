@@ -1,6 +1,6 @@
 import { sdk } from "@farcaster/frame-sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useAccount, useConnect, usePublicClient, useSignMessage, useWriteContract } from "wagmi";
+import { useAccount, useConnect, usePublicClient, useWriteContract } from "wagmi";
 import leaderboardAbi from "./abi/Leaderboard.json";
 
 const SCORE_SCALE = 1000;
@@ -10,9 +10,12 @@ function App() {
     sdk.actions.ready();
   }, []);
 
+  const [activeView, setActiveView] = useState<"game" | "leaderboard">("game");
+  const [leaderboardRefreshToken, setLeaderboardRefreshToken] = useState(0);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 to-zinc-900 text-zinc-100">
-      <div className="mx-auto max-w-md px-4 py-6 space-y-6">
+      <div className="mx-auto max-w-md px-4 py-6 space-y-4">
         <header className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold tracking-tight">Crash Dash</h1>
@@ -21,15 +24,40 @@ function App() {
           <ConnectMenu />
         </header>
 
-        <Game />
-        <Leaderboard />
+        <div className="mt-1 flex rounded-xl bg-zinc-800/60 p-1 ring-1 ring-white/10">
+          <button
+            type="button"
+            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${activeView === "game" ? "bg-zinc-900 text-white" : "text-zinc-300 hover:text-white"}`}
+            onClick={() => setActiveView("game")}
+          >
+            游戏
+          </button>
+          <button
+            type="button"
+            className={`flex-1 rounded-lg px-3 py-2 text-xs font-medium transition ${activeView === "leaderboard" ? "bg-zinc-900 text-white" : "text-zinc-300 hover:text-white"}`}
+            onClick={() => setActiveView("leaderboard")}
+          >
+            排行榜
+          </button>
+        </div>
+
+        {activeView === "game" && (
+          <Game
+            onSubmitted={() => {
+              setActiveView("leaderboard");
+              setLeaderboardRefreshToken((t) => t + 1);
+            }}
+          />
+        )}
+
+        {activeView === "leaderboard" && <Leaderboard refreshToken={leaderboardRefreshToken} />}
       </div>
     </div>
   );
 }
 
 function ConnectMenu() {
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
 
   if (isConnected) {
@@ -38,8 +66,6 @@ function ConnectMenu() {
         <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
           已连接
         </span>
-        <span className="truncate max-w-[140px] text-xs text-zinc-300">{address}</span>
-        <SignButton />
       </div>
     );
   }
@@ -55,28 +81,12 @@ function ConnectMenu() {
   );
 }
 
-function SignButton() {
-  const { signMessage, isPending, data, error } = useSignMessage();
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => signMessage({ message: "hello world" })}
-        disabled={isPending}
-        className="inline-flex items-center justify-center rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 ring-1 ring-inset ring-white/10 hover:bg-zinc-700 disabled:opacity-60"
-      >
-        {isPending ? "签名中..." : "消息签名"}
-      </button>
-      {data && <span className="truncate max-w-[120px] text-[10px] text-zinc-400">{data}</span>}
-      {error && <span className="text-[10px] text-red-400">{error.message}</span>}
-    </div>
-  );
-}
+// 保留空壳（后续可扩展签名/登录），避免未使用警告
+// 已移除签名按钮以简化顶部区域
 
 type Candle = { open: number; high: number; low: number; close: number };
 
-function Game() {
+function Game({ onSubmitted }: { onSubmitted?: () => void }) {
   const TOTAL_MS = 20000;
   const STEP_MS = 500;
   const MAX_STEPS = Math.floor(TOTAL_MS / STEP_MS);
@@ -228,7 +238,7 @@ function Game() {
             >
               再玩一次
             </button>
-            <SubmitScoreButton score={finalScore} />
+            <SubmitScoreButton score={finalScore} onSubmitted={onSubmitted} />
           </div>
         </div>
       )}
@@ -324,9 +334,9 @@ function CandleChart({ candles, height, sellPrice }: { candles: Candle[]; height
   );
 }
 
-function SubmitScoreButton({ score }: { score: number }) {
+function SubmitScoreButton({ score, onSubmitted }: { score: number; onSubmitted?: () => void }) {
   const { isConnected } = useAccount();
-  const { writeContract, isPending, data, error } = useWriteContract();
+  const { writeContract, isPending } = useWriteContract();
 
   // NOTE: 等你部署后把地址填进来
   const contractAddress = useMemo<`0x${string}`>(() => {
@@ -342,6 +352,7 @@ function SubmitScoreButton({ score }: { score: number }) {
       functionName: "submitScore",
       args: [BigInt(Math.round(score * SCORE_SCALE))],
     });
+    onSubmitted?.();
   };
 
   return (
@@ -354,8 +365,6 @@ function SubmitScoreButton({ score }: { score: number }) {
       >
         {isPending ? "提交中..." : "提交分数"}
       </button>
-      {data && <div className="mt-1 truncate text-[10px] text-zinc-400">Tx: {String(data)}</div>}
-      {error && <div className="mt-1 text-[10px] text-red-400">{error.message}</div>}
     </div>
   );
 }
@@ -369,7 +378,7 @@ type ScoreSubmittedEvent = {
   transactionHash: `0x${string}`;
 };
 
-function Leaderboard() {
+function Leaderboard(_: { refreshToken?: number }) {
   const publicClient = usePublicClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -421,25 +430,42 @@ function Leaderboard() {
   }, [refresh]);
 
   return (
-    <div style={{ marginTop: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <h3>Leaderboard</h3>
-        <button type="button" onClick={() => void refresh()} disabled={loading}>
-          {loading ? "Loading..." : "Refresh"}
+    <section className="rounded-2xl bg-zinc-900/60 ring-1 ring-white/10 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-zinc-200">排行榜</h3>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          disabled={loading}
+          className="inline-flex items-center justify-center rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-200 ring-1 ring-inset ring-white/10 hover:bg-zinc-700 disabled:opacity-50"
+        >
+          {loading ? "同步中..." : "刷新"}
         </button>
       </div>
-      {error && <div style={{ color: "red" }}>Error: {error}</div>}
-      {rows.length === 0 && !loading && <div>No scores yet.</div>}
+
+      {error && <div className="text-xs text-red-400">{error}</div>}
+      {rows.length === 0 && !loading && (
+        <div className="text-center text-sm text-zinc-400">暂无成绩</div>
+      )}
+
       {rows.length > 0 && (
-        <ol>
+        <ol className="divide-y divide-white/5 overflow-hidden rounded-xl bg-gradient-to-b from-zinc-950 to-zinc-900 ring-1 ring-white/10">
           {rows.map((r, idx) => (
-            <li key={`${r.player}-${idx}`}>
-              #{idx + 1} {shortAddr(r.player)} — score: {r.bestScore.toString()}
+            <li key={`${r.player}-${idx}`} className="relative flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="w-6 text-right text-xs font-bold text-zinc-300">{idx + 1}</span>
+                <div className="h-6 w-6 rounded-full bg-indigo-500/20 ring-1 ring-inset ring-indigo-500/30" />
+                <span className="text-xs text-zinc-300">{shortAddr(r.player)}</span>
+              </div>
+              <div className="text-sm font-semibold text-emerald-300">
+                {(Number(r.bestScore) / SCORE_SCALE).toFixed(3)}
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 -z-10 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             </li>
           ))}
         </ol>
       )}
-    </div>
+    </section>
   );
 }
 
