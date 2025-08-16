@@ -2,19 +2,19 @@
   "frame": {
     "name": "Crash Dash",
     "version": "1",
-    "iconUrl": "crashdash.zhanghe.dev/logo.jpg",
-    "homeUrl": "crashdash.zhanghe.dev",
-    "imageUrl": "crashdash.zhanghe.dev/image.png",
-    "splashImageUrl": "crashdash.zhanghe.dev/splash.png",
+    "iconUrl": "https://crashdash.zhanghe.dev/logo.jpg",
+    "homeUrl": "https://crashdash.zhanghe.dev",
+    "imageUrl": "https://crashdash.zhanghe.dev/image.png",
+    "splashImageUrl": "https://crashdash.zhanghe.dev/splash.png",
     "splashBackgroundColor": "#101827",
-    "webhookUrl": "crashdash.zhanghe.dev/api/webhook",
+    "webhookUrl": "https://crashdash.zhanghe.dev/api/webhook",
     "subtitle": "Crash Dash",
     "description": "Crash Dash",
     "primaryCategory": "games"
   },
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
+    "header": "eyJmaWQiOjY4NTA5NywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGMwMEJFMUI1NjI4MzY0MGI4NTQ0MmUzNzliOWZhZDk1ODZjNGExODAifQ",
+    "payload": "eyJkb21haW4iOiJjcmFzaGRhc2guemhhbmdoZS5kZXYifQ",
+    "signature": "MHhjM2E3NTgwNjhlMmRjN2RhNWNiMmZhZWQ2ZGMyMDY4Mjg5ODk5YTg3YWZmNzdmNDA5ZmRkODc1NjYyZmYxMWY5NDNhZGQ3ZjAwODA2ZGQ0NmRmZmE1OTIzYjFiZTBjNDdhNDJkNzI0MGVmYWZlODI1NmMwZmU1Mjk4YzIxOWM0ZjFj"
   }
 }
